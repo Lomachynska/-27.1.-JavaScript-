@@ -76,6 +76,8 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+
+
 // Підтримка свайпів на мобільних пристроях і перетягування мишею на десктопі
 let startX = 0;
 let isTouching = false;

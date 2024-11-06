@@ -1,134 +1,125 @@
-// Зміна слайдів (управління вперед/назад)
-
-let currentSlide = 0;
+// Ініціалізація змінних
+const slider = document.querySelector('.slider');
 const slides = document.querySelectorAll('.slide');
-const totalSlides = slides.length;
-const slider = document.getElementById('slider');
+const prevButton = document.querySelector('.prev');
+const nextButton = document.querySelector('.next');
+const pauseButton = document.querySelector('.pause');
+const indicators = document.querySelectorAll('.indicator');
+let currentIndex = 0;
+let slideInterval;
+let isPaused = false;
+const slideIntervalTime = 3000; // Інтервал автоматичного перегортання слайдів
 
-function showSlide(index) {
-  if (index >= totalSlides) {
-    currentSlide = 0;
-  } else if (index < 0) {
-    currentSlide = totalSlides - 1;
-  } else {
-    currentSlide = index;
-  }
-  slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+// Функція для оновлення слайдів
+function updateSlider() {
+  const offset = -currentIndex * 100;
+  slider.style.transform = `translateX(${offset}%)`;
   updateIndicators();
 }
 
-function nextSlide() {
-  showSlide(currentSlide + 1);
-}
-
-function prevSlide() {
-  showSlide(currentSlide - 1);
-}
-
-// Автоматичне перегортання слайдів:
-let autoSlideInterval;
-
-function startAutoSlide() {
-  autoSlideInterval = setInterval(nextSlide, 3000); // змінюємо слайд кожні 3 секунди
-}
-
-function stopAutoSlide() {
-  clearInterval(autoSlideInterval);
-}
-
-document.getElementById('pause').addEventListener('click', () => {
-  if (autoSlideInterval) {
-    stopAutoSlide();
-    document.getElementById('pause').textContent = 'Resume';
-  } else {
-    startAutoSlide();
-    document.getElementById('pause').textContent = 'Pause';
-  }
-});
-
-startAutoSlide(); // Почати автоматичний перехід при завантаженні
-
-
-// Індикатори поточного слайду:
-function createIndicators() {
-    const indicatorsContainer = document.getElementById('indicators');
-    for (let i = 0; i < totalSlides; i++) {
-      const indicator = document.createElement('span');
-      indicator.classList.add('indicator');
-      indicator.addEventListener('click', () => showSlide(i));
-      indicatorsContainer.appendChild(indicator);
-    }
-  }
-  
-  function updateIndicators() {
-    const indicators = document.querySelectorAll('.indicator');
-    indicators.forEach((indicator, index) => {
-      indicator.classList.toggle('active', index === currentSlide);
-    });
-  }
-  
-  createIndicators();
-  updateIndicators();
-
-  
-//Управління клавіатурними командами:
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowRight') {
-      nextSlide();
-    } else if (event.key === 'ArrowLeft') {
-      prevSlide();
-    }
+// Оновлення індикаторів
+function updateIndicators() {
+  indicators.forEach((indicator, index) => {
+    indicator.classList.toggle('active', index === currentIndex);
   });
+}
 
-  
-// Підтримка тач-жестів (для мобільних пристроїв):
-let startX;
-let endX;
+// Навігація вперед
+function nextSlide() {
+  currentIndex = (currentIndex + 1) % slides.length;
+  updateSlider();
+}
 
-slider.addEventListener('touchstart', (event) => {
-  startX = event.touches[0].clientX;
+// Навігація назад
+function prevSlide() {
+  currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+  updateSlider();
+}
+
+// Клік по індикатору
+indicators.forEach((indicator, index) => {
+  indicator.addEventListener('click', () => {
+    currentIndex = index;
+    updateSlider();
+  });
 });
 
-slider.addEventListener('touchend', (event) => {
-  endX = event.changedTouches[0].clientX;
-  if (startX > endX + 50) {
-    nextSlide(); // свайп вправо
-  } else if (startX < endX - 50) {
-    prevSlide(); // свайп вліво
+// Запуск/паузування автоматичного слайдера
+function togglePause() {
+  if (isPaused) {
+    slideInterval = setInterval(nextSlide, slideIntervalTime);
+    pauseButton.textContent = 'Pause';
+  } else {
+    clearInterval(slideInterval);
+    pauseButton.textContent = 'Resume';
+  }
+  isPaused = !isPaused;
+}
+
+// Обробка подій кнопок
+nextButton.addEventListener('click', nextSlide);
+prevButton.addEventListener('click', prevSlide);
+pauseButton.addEventListener('click', togglePause);
+
+// Автоматичне перегортання слайдів
+function startAutoSlide() {
+  slideInterval = setInterval(nextSlide, slideIntervalTime);
+}
+startAutoSlide();
+
+// Обробка клавіатурних подій
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowRight') {
+    nextSlide();
+  } else if (event.key === 'ArrowLeft') {
+    prevSlide();
   }
 });
 
+// Підтримка свайпів на мобільних пристроях і перетягування мишею на десктопі
+let startX = 0;
+let isTouching = false;
 
-//Перетягування мишею на десктопі:
-let isDragging = false;
-let dragStartX;
-
-slider.addEventListener('mousedown', (event) => {
-  isDragging = true;
-  dragStartX = event.clientX;
+slider.addEventListener('mousedown', (e) => {
+  isTouching = true;
+  startX = e.pageX;
 });
 
-slider.addEventListener('mousemove', (event) => {
-  if (isDragging) {
-    const dragDistance = dragStartX - event.clientX;
-    if (dragDistance > 50) {
-      nextSlide();
-      isDragging = false;
-    } else if (dragDistance < -50) {
+slider.addEventListener('mousemove', (e) => {
+  if (isTouching) {
+    const moveX = e.pageX - startX;
+    if (moveX > 50) {
       prevSlide();
-      isDragging = false;
+      isTouching = false;
+    } else if (moveX < -50) {
+      nextSlide();
+      isTouching = false;
     }
   }
 });
 
 slider.addEventListener('mouseup', () => {
-  isDragging = false;
+  isTouching = false;
 });
 
+slider.addEventListener('touchstart', (e) => {
+  isTouching = true;
+  startX = e.changedTouches[0].pageX;
+});
 
-// ВИСНОВОК
-// Перемикання слайдів вручну через кнопки навігації та індикатори.
-// // Автоматичне перегортання слайдів з паузою/відновленням.
-// Управління через клавіатурні команди та тач-жести.
-// Інтуїтивно зрозуміле та ефективне використання JavaScript та DOM.
-// слайдер, який можна адаптувати під різні пристрої, підтримує як десктопні, так і мобільні платформи, і має можливість інтуїтивно керувати зміною слайдів.
+slider.addEventListener('touchmove', (e) => {
+  if (isTouching) {
+    const moveX = e.changedTouches[0].pageX - startX;
+    if (moveX > 50) {
+      prevSlide();
+      isTouching = false;
+    } else if (moveX < -50) {
+      nextSlide();
+      isTouching = false;
+    }
+  }
+});
+
+slider.addEventListener('touchend', () => {
+  isTouching = false;
+});

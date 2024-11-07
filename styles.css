@@ -1,3 +1,19 @@
+h1 {
+  text-align: center;
+}
+
+span {
+  color: red;
+}
+
+footer, p{
+  text-align: center;
+  color:chocolate;
+  font-weight: 800;
+  margin-top: 30px;
+}
+
+
 /* Стилізація контейнера слайдера */
 .slider-container {
   position: relative;
